@@ -16,6 +16,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define RANGE 7
 
@@ -56,29 +57,36 @@ void search(lnode *list, lnode **crnt, lnode **pred, int x) {
   }
 }
 
-// int listlen(lnode *list) {
-//   int count = 0;
-//   lnode nextnode;
-//
-//   if (*list) {
-//     count = 1;
-//     nextnode = *list;
-//   }
-//   while (nextnode.next) {
-//     count += 1;
-//     nextnode = nextnode.next;
-//   }
-//   return count;
-// }
+int listlen(lnode *list) {
+  int count = 0;
+  lnode *nextnode;
+
+  if (list) {
+    count = 1;
+    nextnode = list;
+  }
+  while (nextnode->next) {
+    count += 1;
+    nextnode = nextnode->next;
+  }
+  return count;
+}
 
 /* Deletes the node from list that is successor of the node
 pointed by after. Returns 1 on success, 0 otherwise. */
 int delfromlist(lnode **list, lnode *after) {
+  if (after == NULL) {
+    lnode *todel = *list;
+    lnode *data_after = todel->next;
+    *list = data_after;
+    freenode(&todel);
+    return 1;
+  }
   if (after->next) {
     lnode *todel = after->next;
     lnode *data_after = todel->next;
-    freenode(&todel);
     after->next = data_after;
+    freenode(&todel);
     return 1;
   } else {
     return 0;
@@ -91,6 +99,15 @@ calls search() */
 int insertinlist(lnode **list, int x) {
   lnode *xnode;
   lnode *pred;
+
+  if (*list == NULL) {
+    lnode *newnode;
+    getnode(&newnode);
+    newnode->value = x;
+    *list = newnode;
+    return 1;
+  }
+
   search(*list, &xnode, &pred, x);
   if (xnode) {
     delfromlist(list, pred);
@@ -105,30 +122,33 @@ int insertinlist(lnode **list, int x) {
   }
 }
 
-// char *nodetos(lnode *node) {
-//   char strval[sizeof(int)];
-//   char *ptrstrval;
-//
-//   ptrstrval += sprintf(ptrstrval, "%d", node->value);
-//
-//   int lenstr = sizeofs(ptrstrval);
-//   if (lenstr > -1) {
-//     char toret[lenstr];
-//     strncpy(toret, ptrstrval, lenstr);
-//     return &toret;
-//   } else {
-//     return &ptrstrval;
-//   }
-// }
-//
-// char *listtos(lnode *list, **str) {
-//
-// }
-//
-// /* Prints the contents of given list (on one line on stdout) */
-// void printlist(lnode *list) {
-//   printf("%d\n", list->next);
-// }
+/* Returns a string representation of node. */
+char *nodetos(lnode *node) {
+  char *ptrstrval = malloc(6);
+
+  int lenstr = sprintf(ptrstrval, "%d", node->value);
+
+  char *toret = malloc(lenstr);
+  strncpy(toret, ptrstrval, lenstr);
+  return toret;
+}
+
+/* Prints the contents of given list (on one line on stdout) */
+void printlist(lnode *list) {
+  lnode *n = list;
+  while (n) {
+    char *nodestr = nodetos(n);
+    printf("%s", nodestr);
+    free(nodestr);
+    if (n->next) {
+      n = n->next;
+      printf(" -> ");
+    } else {
+      n = NULL;
+    }
+  }
+  printf("\n");
+}
 
 /* Returns the node storage to system for nodes in the list, one
 node at a time. Calls freenode(). Returns empty list to caller. */
@@ -148,35 +168,47 @@ int isodd(int num) {
   return (int) (num & 0x01);
 }
 
-// /* Returns the size of str. Returns -1 if NULL terminator '\0' is not found. */
-// int sizeofs(char str[]) {
-//   for (int i = 0; i < sizeof(str); i++) {
-//     if (str[i] == '\0') {
-//       return i + 1;
-//     }
-//   }
-//   return -1;
-// }
-
 int main(int argc, char *argv[]) {
-  lnode *lodds;
-  lnode *levens;
-  getnode(&lodds);
-  getnode(&levens);
+  lnode *lodds, *levens;
+  // getnode(&lodds);
+  // getnode(&levens);
+  printf("%d\n", lodds);
+  printf("%d\n", levens);
 
   long int iterations = 0;
   if (argc > 1) iterations = strtol(argv[1], NULL, 10);
   long int count = 0;
 
+  if (iterations == 0) {
+    fprintf(stderr, "Expected 2 arguments in the command line. 0 given.\n");
+    exit(1);
+  }
+
   for (count; count < iterations; count++) {
     int n = nextnum();
     printf("Next number: %d\n", n);
     if (isodd(n)) {
-      printf("Inserting n into odds.\n");
       insertinlist(&lodds, n);
     } else {
-      printf("Inserting n into evens.\n");
       insertinlist(&levens, n);
     }
+    printf("%d\n", lodds);
+    printf("%d\n", levens);
+    if (lodds) {
+      printf("yo\n");
+      printlist(lodds);
+    } else {
+      printf("Odd list has no contents.\n");
+    }
+    if (levens) {
+      printf("hey\n");
+      printlist(levens);
+    } else {
+      printf("Even list has no contents.\n");
+    }
   }
+
+  freelist(&lodds);
+  freelist(&levens);
+  exit(0);
 }
