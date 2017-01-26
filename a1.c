@@ -8,15 +8,34 @@
  *    list (odds in the odd list, evens in the even list).
  *
  * Solution:
+ * Create an interface for Linked List. This includes the following:
+ *    - struct lnode;
+ *    - void getnode(lnode **ptr);
+ *    - void freenode(lnode **ptr);
+ *    - void search(lnode *list, lnode **crnt, lnode **pred, int x);
+ *    - int delfromlist(lnode **list, lnode *after);
+ *    - int insertinlist(lnode **list, int x);
+ *    - void printlist(lnode *list);
+ *    - void freelist(lnode **list);
  *
- * TODO:
- *    Finish methods: listtos, printlist, divide, add. Then use printlist to
- *      print both lists out.
+ * In main, a random number is generated and added to it's respective
+ *    list. NULL pointers were a nuisance. There's a lot of checks throughout
+ *    the code to do something special if a NULL pointer is passed into
+ *    a parameter.
  *
+ *    A check is also done to make sure that no bad input is processed. If a
+ *    non-numeric character is entered into the second argument or if no
+ *    argument is supplied in the first place, then an error message is shown
+ *    explaining that the user must input a number into the second argument.
+ *
+ * At the end, after all numbers have been generated and placed into a list,
+ *    the program prints each list, frees up both lists' memory and then exits
+ *    with a code of 0.
  */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define RANGE 7
 
@@ -57,21 +76,6 @@ void search(lnode *list, lnode **crnt, lnode **pred, int x) {
   }
 }
 
-int listlen(lnode *list) {
-  int count = 0;
-  lnode *nextnode;
-
-  if (list) {
-    count = 1;
-    nextnode = list;
-  }
-  while (nextnode->next) {
-    count += 1;
-    nextnode = nextnode->next;
-  }
-  return count;
-}
-
 /* Deletes the node from list that is successor of the node
 pointed by after. Returns 1 on success, 0 otherwise. */
 int delfromlist(lnode **list, lnode *after) {
@@ -88,9 +92,7 @@ int delfromlist(lnode **list, lnode *after) {
     after->next = data_after;
     freenode(&todel);
     return 1;
-  } else {
-    return 0;
-  }
+  } else return 0;
 }
 
 /* Inserts x at the front of list if not found in list, deletes it
@@ -122,30 +124,15 @@ int insertinlist(lnode **list, int x) {
   }
 }
 
-/* Returns a string representation of node. */
-char *nodetos(lnode *node) {
-  char *ptrstrval = malloc(6);
-
-  int lenstr = sprintf(ptrstrval, "%d", node->value);
-
-  char *toret = malloc(lenstr);
-  strncpy(toret, ptrstrval, lenstr);
-  return toret;
-}
-
 /* Prints the contents of given list (on one line on stdout) */
 void printlist(lnode *list) {
   lnode *n = list;
   while (n) {
-    char *nodestr = nodetos(n);
-    printf("%s", nodestr);
-    free(nodestr);
+    printf("%d", n->value);
     if (n->next) {
       n = n->next;
-      printf(" -> ");
-    } else {
-      n = NULL;
-    }
+      printf(" ");
+    } else n = NULL;
   }
   printf("\n");
 }
@@ -169,44 +156,32 @@ int isodd(int num) {
 }
 
 int main(int argc, char *argv[]) {
-  lnode *lodds, *levens;
-  // getnode(&lodds);
-  // getnode(&levens);
-  printf("%d\n", lodds);
-  printf("%d\n", levens);
+  lnode *lodds = NULL;
+  lnode *levens = NULL;
+
+  srand(time(NULL));
 
   long int iterations = 0;
   if (argc > 1) iterations = strtol(argv[1], NULL, 10);
   long int count = 0;
 
   if (iterations == 0) {
-    fprintf(stderr, "Expected 2 arguments in the command line. 0 given.\n");
+    fprintf(stderr, "Please enter a number as the second argument.\n");
     exit(1);
   }
 
   for (count; count < iterations; count++) {
     int n = nextnum();
-    printf("Next number: %d\n", n);
-    if (isodd(n)) {
-      insertinlist(&lodds, n);
-    } else {
-      insertinlist(&levens, n);
-    }
-    printf("%d\n", lodds);
-    printf("%d\n", levens);
-    if (lodds) {
-      printf("yo\n");
-      printlist(lodds);
-    } else {
-      printf("Odd list has no contents.\n");
-    }
-    if (levens) {
-      printf("hey\n");
-      printlist(levens);
-    } else {
-      printf("Even list has no contents.\n");
-    }
+    if (isodd(n)) insertinlist(&lodds, n);
+    else insertinlist(&levens, n);
   }
+
+  printf("odd-list:  ");
+  if (lodds) printlist(lodds);
+  else printf("empty\n");
+  printf("even-list: ");
+  if (levens) printlist(levens);
+  else printf("empty\n");
 
   freelist(&lodds);
   freelist(&levens);
